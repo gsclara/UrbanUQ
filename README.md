@@ -6,103 +6,32 @@ Coupling of OpenFOAM libraries and Dakota for uncertainty quantificatioon purpos
 
 ## What is inside?
 
-casebase1.zip
-casebase2.zip
-cluster_submission.pbs
+casebase1.zip: openFOAM case folder with the cases from 0-90 degres in wind direction
 
+casebase2.zip: openFOAM case folder with the cases from 0-90 degres in wind direction
 
-### Initial Configuration
+templatedir.zip: ABLConditions.template, initialConditions.template files with symbolic UQ variables x1, x2, x3
 
-> Some projects require initial configuration (e.g. access tokens or keys, `npm i`).
-> This is the section where you would document those requirements.
+cluster_submission.pbs: script to submit to cluster
 
-## Developing
+dakota_of_ASKH.in: input file to run dakota (in this case for polynomial chaos)
 
-> Here's a brief intro about what a developer must do in order to start developing
-> the project further:
+LauchSimulationUQ: file to launch a set of simulations with a for loop
 
-> ```shell
-> git clone https://github.com/your/awesome-project.git
-> cd awesome-project/
-> packagemanager install
-> ```
+simulator_script_cluster: script to set-up the runs for a cluster run based on dakota input using the casebase1, casebase2 and templatedir
 
-> And state what happens step-by-step.
-
-### Building
-
-> If your project needs some additional steps for the developer to build the
-> project after some code changes, state them here:
-
-> ```shell
-> ./configure
-> make
-> make install
-> ```
-
-> Here again you should state what actually happens when the code above gets
-> executed.
-
-### Deploying / Publishing
-
-> In case there's some step you have to take that publishes this project to a
-> server, this is the right time to state it.
-
-> ```shell
-> packagemanager deploy awesome-project -s server.com -u username -p password
-> ```
-
-> And again you'd need to tell what the previous code actually does.
+simulator_script_local: script to set-up the runs for a local computer run based on dakota input using the casebase1, casebase2 and templatedir
 
 ## Features
 
-> What's all the bells and whistles this project can perform?
-> * What's the main functionality
-> * You can also do another thing
-> * If you get really randy, you can even do this
+The current set-up works with OpenFOAM 2.3 and Dakota 6.
 
 ## Configuration
 
-> Here you should write what are all of the configurations a user can enter when
-> using the project.
+The current set-up uses wind velocity, direction and roughness length as uncertainty variables.
 
 ## Contributing
 
-> When you publish something open source, one of the greatest motivations is that
-> anyone can just jump in and start contributing to your project.
+If you'd like to contribute, please fork the repository and use a feature
+branch. Pull requests are warmly welcome.
 
-> These paragraphs are meant to welcome those kind souls to feel that they are
-> needed. You should state something like:
-
-> "If you'd like to contribute, please fork the repository and use a feature
-> branch. Pull requests are warmly welcome."
-
-> If there's anything else the developer needs to know (e.g. the code style
-> guide), you should link it here. If there's a lot of things to take into
-> consideration, it is common to separate this section to its own file called
-> `CONTRIBUTING.md` (or similar). If so, you should say that it exists here.
-
-## Links
-
-> Even though this information can be found inside the project on machine-readable
-> format like in a .json file, it's good to include a summary of most useful
-> links to humans using your project. You can include links like:
-
-> - Project homepage: https://your.github.com/awesome-project/
-> - Repository: https://github.com/your/awesome-project/
-> - Issue tracker: https://github.com/your/awesome-project/issues
-> - In case of sensitive bugs like security vulnerabilities, please contact
-    my@email.com directly instead of using issue tracker. We value your effort
-    to improve the security and privacy of this project!
-> - Related projects:
-> - Your other project: https://github.com/your/other-project/
-> - Someone else's project: https://github.com/someones/awesome-project/
-
-
-## Licensing
-
-> One really important part: Give your project a proper license. Here you should
-> state what the license is and how to find the text version of the license.
-> Something like:
-
-> "The code in this project is licensed under MIT license."
