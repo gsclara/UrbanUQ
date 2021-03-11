@@ -4,18 +4,12 @@
 
 Coupling of OpenFOAM libraries and Dakota for uncertainty quantificatioon purposes. 
 
-## Installing / Getting started
+## What is inside?
 
-> A quick introduction of the minimal setup you need to get a hello world up &
-running.
+casebase1.zip
+casebase2.zip
+cluster_submission.pbs
 
-> ```shell
-> packagemanager install awesome-project
-> awesome-project start
-> awesome-project "Do something!"  # prints "Nah."
-> ```
-
-> Here you should say what actually happens when you execute the code above.
 
 ### Initial Configuration
 
