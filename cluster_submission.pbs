@@ -1,0 +1,17 @@
+#!/bin/bash
+#PBS -N workdir 
+#PBS -e openfoam1.err 
+#PBS -o openfoam1.out 
+#PBS -m aeb 
+#PBS -M email 
+#PBS -l nodes=1:ppn=24 
+#PBS -l walltime=08:00:00 
+#PBS -V 
+#PBS -q medium 
+module load gnu/4.9.2 
+module load openmpi/1.10.2-gnu-4.9.2 
+source your/location/OpenFOAM/OpenFOAM-4.0/etc/bashrc
+cd 
+decomposePar >log.preRun 
+mpirun -np 24 scalarTransportBoundedSimpleFoam -parallel >log.run 
+wait

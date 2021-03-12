@@ -1,0 +1,48 @@
+# Usage:
+#   dakota -i xxx.in -o run.out > stdout.out
+
+environment
+    #graphics
+    tabular_graphics_data
+    tabular_graphics_file = 'table_out.dat'
+ 
+method
+  polynomial_chaos
+    quadrature_order = 7 
+    dimension_preference = 1 2 2  
+    samples = 10000
+    seed = 12347 rng rnum2
+    num_response_levels = 36*191
+			  36*131
+			  36*101 
+    response_levels = 36*2:0.1:21   
+		      36*145:0.5:210 
+		      36*0.5:0.05:5.5    
+    variance_based_decomp
+    
+variables
+  beta_uncertain = 3 
+    alphas = 0.8609 0.8609 1.
+    betas = 0.8609 0.8609 1.
+    lower_bounds = 6.39 175.33 0.02
+    upper_bounds = 17.2 229.74 0.05
+    descriptors  = 'x1' 'x2' 'x3'  
+
+interface
+	fork
+	  asynchronous
+	  evaluation_concurrency = 2
+          local_evaluation_scheduling static
+	  analysis_driver = 'simulator_script'
+	  parameters_file = 'params.in'
+	  results_file    = 'results.out'
+	  work_directory directory_tag file_tag 
+	  named 'workdir' file_save  directory_save
+ 	  link_files = 'templatedir/*' 
+	
+responses
+  num_response_functions = 36 
+  field_responses = 36
+  length = 36 36 36
+  no_gradients
+  no_hessians
