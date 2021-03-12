@@ -1,0 +1,94 @@
+#!/bin/sh
+# Sample simulator to Dakota system call script
+# See Advanced Simulation Code Interfaces chapter in Users Manual
+
+# $1 is params.in FROM Dakota
+# $2 is results.out returned to Dakota
+
+# Script sets up all the cases needed within the UQ case. Based in Askervein hill 1983, TU03b campaign measurements.
+# Only 180 degres of wind direction are considered, so only 2 test cases are needed to set up the run, depending on a limiting angle (thetaLimit).
+# This scripts computes all the variables and sets the cases automatically and runs them locally.
+
+# Local variable definition: 
+NCORES=8
+thetaLimit=210;
+Href=10;
+vkconstant=0.41;
+# --------------
+# PRE-PROCESSING
+# --------------
+# Incorporate the parameters from DAKOTA into the template, writing ros.in
+# Use the following line if SNL's APREPRO utility is used instead of DPrePro.
+# ../aprepro -c '*' -q --nowarning ros.template ros.in
+
+dprepro $1 ABLConditions.template ABLConditions.in
+# --------
+# ANALYSIS
+# --------
+# choose the type of case depending on the wind direction
+pi=`echo "4*a(1)" |bc -l`
+cp ../templatedir/initialConditions.template initialConditions.in
+a=$(grep 'AngleIn' ABLConditions.in | awk ' {print substr($2, 0, length($2))}');
+theta=$(echo  ${a} | awk '{ print sprintf("%.9f", $1); }');
+a1=$(grep 'AngleRef' ABLConditions.in | awk ' {print substr($2, 0, length($2))}');
+thetaRef=$(echo  ${a1} | awk '{ print sprintf("%.9f", $1); }');
+b=$(grep 'Uref' ABLConditions.in | awk ' {print substr($2, 0, length($2)-1)}')
+U=$(echo  ${b} | awk '{ print sprintf("%.2f", $1); }');
+Ucomp1=`echo "c(($thetaRef-$theta)*pi/180)*$U" | bc -l`
+Ucomp2=`echo "s(($thetaRef-$theta)*pi/180)*$U" | bc -l`
+if [ $(echo " ${theta} > $thetaLimit" | bc) -eq 1 ]; then
+    cp -r ../casebase1/* .;
+else
+    cp -r ../casebase2/* .;
+fi
+c=$(grep 'z0' ABLConditions.in | awk ' {print substr($3, 0, length($3)-1)}')
+z0=$(echo  ${c} | awk '{ print sprintf("%.15f", $1); }');
+uStar=`echo "$U*$vkconstant/l(($Href+$z0)/$z0)" | bc -l`
+tke=`echo "$uStar*$uStar/0.3" | bc -l`
+eps=`echo "$uStar*$uStar*$uStar/($vkconstant*($Href+$z0))" | bc -l`
+sed 's/tkeInitial/'${tke}'/g' initialConditions.template > initialConditions.1
+sed 's/epsInitial/'${eps}'/g' initialConditions.1 > initialConditions.in
+sed 's/tkeInitial/'${tke}'/g' ABLConditions.in > ABLConditions.1 
+sed 's/Ucomp1/'${Ucomp1}'/g' ABLConditions.1 > ABLConditions.2
+sed 's/Ucomp2/'${Ucomp2}'/g' ABLConditions.2 > ABLConditions.3
+mv ABLConditions.3 ABLConditions.in
+cp initialConditions.in 0/include/initialConditions
+cp ABLConditions.in 0/include/ABLConditions
+rm initialConditions.1
+rm ABLConditions.1 ABCconditions.2
+module load mpi/openmpi-x86_64
+source $HOME/OpenFOAM/OpenFOAM-4.0/etc/bashrc WM_LABEL_SIZE=64 WM_COMPILER_TYPE=ThirdParty FOAMY_HEX_MESH=yes
+MPIRUN=$(which mpirun)
+export OPENMPI_ROOT=$(dirname $MPIRUN | sed -e 's_/bin__g')
+MPI_OPTS="--bind-to-core --report-bindings -x OMPI_MCA_memory_linux_disable=1 -x MALLOC_MMAP_MAX_=0 -x MALLOC_TRIM_THRESHOLD_=-1 --mca mpi_paffinity_alone 1 --mca btl openib,sm,self"
+# ---------------
+# SIMULATION
+# ---------------
+decomposePar > log.decomposePar
+mpirun -np $NCORES scalarTransportBoundedSimpleFoam -parallel > log.simpleFoam
+cp system/fvSchemes2 system/fvSchemes
+cp system/controlDict2 system/controlDict
+mpirun -np $NCORES scalarTransportSimpleFoam -parallel > log.simpleFoamR
+cp system/controlDictPost system/controlDict
+mpirun -np $NCORES -postProcess -noFunctionObject -parallel > log.Um
+mpirun -np $NCORES -postProcess -func probes -parallel -latestTime> log.probes
+# ---------------
+# POST-PROCESSING
+# ---------------
+grep 'Time' log.simpleFoamR | tail -2 > tmp.txt
+endTime=$(head -n 1 tmp.txt |cut -d" " -f3)
+rm tmp.txt
+tail -n 1 postProcessing/probes/$endTime/Um | cut -f 2 >> tmp1.txt
+awk '{$1="";  print $0}' tmp1.txt >> tmp.txt
+tail -n 1 postProcessing/probes/$endTime/Ud | cut -f 2 >> tmp2.txt
+awk '{$1="";  print $0}' tmp2.txt >> tmp.txt
+tail -n 1 postProcessing/probes/$endTime/c | cut -f 2 >> tmp3.txt
+awk '{$1="";  print $0}' tmp3.txt >> tmp.txt
+mv tmp.txt $2
+
+#reconstructPar > log.reconstructPar
+#rm -r 0/polyMesh
+#rm -r processor*
+
+echo "Finished simulation in:"
+pwd
